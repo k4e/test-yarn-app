@@ -35,7 +35,7 @@ public class Client {
     public static List<String> createAMCommands(String jarPath, int countContainer) {
         return Arrays.asList(
                 String.format(
-                        "$JAVA_HOME/bin/java -Xmx256M kitade.coins.ApplicationMaster 1> %s/stdout 2> %s/stderr",
+                        "$JAVA_HOME/bin/java -Xmx256M kitade.coins.ApplicationMasterAsync %s %d 1> %s/stdout 2> %s/stderr",
                         jarPath,
                         countContainer,
                         ApplicationConstants.LOG_DIR_EXPANSION_VAR,
@@ -97,7 +97,7 @@ public class Client {
         }
         
         System.out.println(String.format(
-                "Application %d finished with %s at %d",
+                "Application %s finished with %s at %d",
                 appId.toString(), appState.toString(), appReport.getFinishTime()));
     }
 }

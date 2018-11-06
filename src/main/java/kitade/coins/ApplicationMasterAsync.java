@@ -32,6 +32,8 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
     public ApplicationMasterAsync(String jarPath, int countContainer) {
         this.conf = new YarnConfiguration();
         this.nmClient = NMClient.createNMClient();
+        this.nmClient.init(conf);
+        this.nmClient.start();
         this.util = new CLCUtils(conf);
         this.jarPath = jarPath;
         this.countContainer = countContainer;
@@ -64,7 +66,7 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
     @Override
     public void onContainersCompleted(List<ContainerStatus> arg0) {
         for (ContainerStatus status : arg0) {
-            System.out.println(String.format("Launching container: %s (%s)", status.getContainerId(), status));
+            System.out.println(String.format("Completed container: %s (%s)", status.getContainerId(), status));
             synchronized (this) {
                 ++countContainerFinish;
             }

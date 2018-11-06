@@ -24,7 +24,7 @@ public class ApplicationMaster {
     public static List<String> createWorkerCommands() {
         return Arrays.asList(
                 String.format(
-                        "$JAVA_HOME/bin/java -Xmx256M kitade.coins.Worker %s %d 1> %s/stdout 2> %s/stderr",
+                        "$JAVA_HOME/bin/java -Xmx256M kitade.coins.Worker 1> %s/stdout 2> %s/stderr",
                         ApplicationConstants.LOG_DIR_EXPANSION_VAR,
                         ApplicationConstants.LOG_DIR_EXPANSION_VAR
                         )
