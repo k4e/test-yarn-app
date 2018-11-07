@@ -1,6 +1,7 @@
 package kitade.coins;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,9 +29,10 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
     private final String jarPath;
     private final int countContainer;
     private final String workerClass;
+    private final String[] options;
     private int countContainerFinish = 0;
     
-    public ApplicationMasterAsync(String jarPath, int countContainer, String workerClass) {
+    public ApplicationMasterAsync(String jarPath, int countContainer, String workerClass, String[] options) {
         this.conf = new YarnConfiguration();
         this.nmClient = NMClient.createNMClient();
         this.nmClient.init(conf);
@@ -39,6 +41,7 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
         this.jarPath = jarPath;
         this.countContainer = countContainer;
         this.workerClass = workerClass;
+        this.options = options;
     }
     
     @Override
@@ -51,14 +54,14 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
         for(Container container : arg0) {
             try {
                 ContainerLaunchContext ctx = Records.newRecord(ContainerLaunchContext.class);
-                ctx.setCommands(ApplicationMaster.createWorkerCommands(workerClass));
+                ctx.setCommands(ApplicationMaster.createWorkerCommands(workerClass, options));
                 ctx.setLocalResources(Collections.singletonMap("yarn-app.jar", util.createJarResource(jarPath)));
                 ctx.setEnvironment(util.createDefaultEnvironment());
-                System.out.println(String.format("Launching container: %s", container.getId()));
+                System.out.println(String.format("[AM] Launching container: %s", container.getId()));
                 nmClient.startContainer(container, ctx);
             }
             catch(IOException | YarnException e) {
-                System.err.println(String.format("Error launching container: %s", container.getId()));
+                System.err.println(String.format("[AM] Error launching container: %s", container.getId()));
                 System.err.println(e);
             }
         }
@@ -67,7 +70,7 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
     @Override
     public void onContainersCompleted(List<ContainerStatus> arg0) {
         for (ContainerStatus status : arg0) {
-            System.out.println(String.format("Completed container: %s (%s)", status.getContainerId(), status));
+            System.out.println(String.format("[AM] Completed container: %s (%s)", status.getContainerId(), status));
             synchronized (this) {
                 ++countContainerFinish;
             }
@@ -76,22 +79,29 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
 
     @Override
     public void onContainersUpdated(List<UpdatedContainer> arg0) {
-        // TODO Auto-generated method stub
+        System.out.println("[AM] onContainersUpdated");
+        for(UpdatedContainer uc : arg0) {
+            System.out.println(String.format("[AM] %s", uc.toString()));
+        }
     }
 
     @Override
     public void onError(Throwable arg0) {
-        // TODO Auto-generated method stub
+        System.out.println("[AM] onError");
+        System.out.println(String.format("[AM] %s", arg0.toString()));
     }
 
     @Override
     public void onNodesUpdated(List<NodeReport> arg0) {
-        // TODO Auto-generated method stub
+        System.out.println("[AM] onNodesUpdated");
+        for(NodeReport nr : arg0) {
+            System.out.println(String.format("[AM] %s", nr.toString()));
+        }
     }
 
     @Override
     public void onShutdownRequest() {
-        // TODO Auto-generated method stub
+        System.out.println("[AM] onShutdownRequest");
     }
     
     public boolean isAllContainersCompleted() {
@@ -104,9 +114,9 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
         rmClient.start();
         
         // ResourceManager に登録
-        System.out.println("Start registration AM");
+        System.out.println("[AM] Start registration");
         rmClient.registerApplicationMaster("", 0, "");
-        System.out.println("End registration AM");
+        System.out.println("[AM] End registration");
         
         // ワーカコンテナの優先度を設定
         Priority priority = Records.newRecord(Priority.class);
@@ -121,11 +131,11 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
         for(int i = 0; i < countContainer; ++i) {
             //                                                  (capacity, nodes, racks, priority)
             ContainerRequest containerAsk = new ContainerRequest(resource, null,  null,  priority);
-            System.out.println(String.format("Making worker container request: (%d/%d)", (i + 1), countContainer));
+            System.out.println(String.format("[AM] Making worker container request: (%d/%d)", (i + 1), countContainer));
             rmClient.addContainerRequest(containerAsk);
         }
         
-        System.out.println("Waiting for containers to finish");
+        System.out.println("[AM] Waiting for containers to finish");
         while(!isAllContainersCompleted()) {
             Thread.sleep(100);
         }
@@ -138,8 +148,9 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
         final String argJarPath = args[0];
         final String argCountContainer = args[1];
         final String argWorkerClass = args[2];
+        final String[] argOptions = (args.length < 4 ? new String[0] : Arrays.copyOfRange(args, 3, args.length));
         int countContainer = Integer.parseInt(argCountContainer);
-        ApplicationMasterAsync amAsync = new ApplicationMasterAsync(argJarPath, countContainer, argWorkerClass);
+        ApplicationMasterAsync amAsync = new ApplicationMasterAsync(argJarPath, countContainer, argWorkerClass, argOptions);
         amAsync.run();
     }
 }

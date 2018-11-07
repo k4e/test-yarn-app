@@ -21,11 +21,17 @@ import org.apache.hadoop.yarn.util.Records;
 
 public class ApplicationMaster {
 
-    public static List<String> createWorkerCommands(String workerClass) {
+    public static List<String> createWorkerCommands(String workerClass, String... options) {
+        StringBuilder optionsBuilder = new StringBuilder();
+        for(String o : options) {
+            optionsBuilder.append(o);
+            optionsBuilder.append(" ");
+        }
         return Arrays.asList(
                 String.format(
-                        "$JAVA_HOME/bin/java -Xmx256M %s 1> %s/stdout 2> %s/stderr",
+                        "$JAVA_HOME/bin/java -Xmx256M %s %s 1> %s/stdout 2> %s/stderr",
                         workerClass,
+                        optionsBuilder.toString(),
                         ApplicationConstants.LOG_DIR_EXPANSION_VAR,
                         ApplicationConstants.LOG_DIR_EXPANSION_VAR
                         )
@@ -36,6 +42,7 @@ public class ApplicationMaster {
         final String argJarPath = args[0];
         final String argCountContainer = args[1];
         final String argWorkerClass = args[2];
+        final String[] argOptions = (args.length < 4 ? new String[0] : Arrays.copyOfRange(args, 3, args.length));
         int countContainer = Integer.parseInt(argCountContainer);
         
         Configuration conf = new YarnConfiguration();
@@ -79,7 +86,7 @@ public class ApplicationMaster {
             AllocateResponse response = rmClient.allocate(responseId++);
             for(Container container : response.getAllocatedContainers()) {
                 ContainerLaunchContext ctx = Records.newRecord(ContainerLaunchContext.class);
-                ctx.setCommands(createWorkerCommands(argWorkerClass));
+                ctx.setCommands(createWorkerCommands(argWorkerClass, argOptions));
                 ctx.setLocalResources(Collections.singletonMap("yarn-app.jar", util.createJarResource(argJarPath)));
                 ctx.setEnvironment(util.createDefaultEnvironment());
                 System.out.println(String.format("Launching container: %s", container.getId()));
