@@ -32,12 +32,13 @@ public class Client {
 
     private static final int COUNT_CONTAINER = 2;
     
-    public static List<String> createAMCommands(String jarPath, int countContainer) {
+    public static List<String> createAMCommands(String jarPath, int countContainer, String workerClass) {
         return Arrays.asList(
                 String.format(
-                        "$JAVA_HOME/bin/java -Xmx256M kitade.coins.ApplicationMasterAsync %s %d 1> %s/stdout 2> %s/stderr",
+                        "$JAVA_HOME/bin/java -Xmx256M kitade.coins.ApplicationMasterAsync %s %d %s 1> %s/stdout 2> %s/stderr",
                         jarPath,
                         countContainer,
+                        workerClass,
                         ApplicationConstants.LOG_DIR_EXPANSION_VAR,
                         ApplicationConstants.LOG_DIR_EXPANSION_VAR)
                 );
@@ -46,6 +47,7 @@ public class Client {
     public static void main(String[] args) throws Exception {
         final String argJarPath = args[0];
         final int countContainer = COUNT_CONTAINER;
+        final String argWorkerClass = args[1];
         
         // YarnClient を生成
         YarnConfiguration conf = new YarnConfiguration();
@@ -60,7 +62,7 @@ public class Client {
         
         // ApplicationMaster を起動するための Container Launch Context をセットアップ
         ContainerLaunchContext amCtx = Records.newRecord(ContainerLaunchContext.class);
-        amCtx.setCommands(createAMCommands(argJarPath, countContainer));
+        amCtx.setCommands(createAMCommands(argJarPath, countContainer, argWorkerClass));
         
         // ApplicationMaster のローカルリソースに Jar を設定
         amCtx.setLocalResources(Collections.singletonMap("yarn-app.jar", util.createJarResource(argJarPath)));

@@ -27,9 +27,10 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
     private final CLCUtils util;
     private final String jarPath;
     private final int countContainer;
+    private final String workerClass;
     private int countContainerFinish = 0;
     
-    public ApplicationMasterAsync(String jarPath, int countContainer) {
+    public ApplicationMasterAsync(String jarPath, int countContainer, String workerClass) {
         this.conf = new YarnConfiguration();
         this.nmClient = NMClient.createNMClient();
         this.nmClient.init(conf);
@@ -37,12 +38,12 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
         this.util = new CLCUtils(conf);
         this.jarPath = jarPath;
         this.countContainer = countContainer;
+        this.workerClass = workerClass;
     }
     
     @Override
     public float getProgress() {
-        // TODO Auto-generated method stub
-        return 0;
+        return Integer.valueOf(countContainerFinish).floatValue() / Integer.valueOf(countContainer).floatValue();
     }
 
     @Override
@@ -50,7 +51,7 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
         for(Container container : arg0) {
             try {
                 ContainerLaunchContext ctx = Records.newRecord(ContainerLaunchContext.class);
-                ctx.setCommands(ApplicationMaster.createWorkerCommands());
+                ctx.setCommands(ApplicationMaster.createWorkerCommands(workerClass));
                 ctx.setLocalResources(Collections.singletonMap("yarn-app.jar", util.createJarResource(jarPath)));
                 ctx.setEnvironment(util.createDefaultEnvironment());
                 System.out.println(String.format("Launching container: %s", container.getId()));
@@ -136,8 +137,9 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
     public static void main(String[] args) throws Exception {
         final String argJarPath = args[0];
         final String argCountContainer = args[1];
+        final String argWorkerClass = args[2];
         int countContainer = Integer.parseInt(argCountContainer);
-        ApplicationMasterAsync amAsync = new ApplicationMasterAsync(argJarPath, countContainer);
+        ApplicationMasterAsync amAsync = new ApplicationMasterAsync(argJarPath, countContainer, argWorkerClass);
         amAsync.run();
     }
 }

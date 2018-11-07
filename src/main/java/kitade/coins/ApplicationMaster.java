@@ -21,10 +21,11 @@ import org.apache.hadoop.yarn.util.Records;
 
 public class ApplicationMaster {
 
-    public static List<String> createWorkerCommands() {
+    public static List<String> createWorkerCommands(String workerClass) {
         return Arrays.asList(
                 String.format(
-                        "$JAVA_HOME/bin/java -Xmx256M kitade.coins.Worker 1> %s/stdout 2> %s/stderr",
+                        "$JAVA_HOME/bin/java -Xmx256M %s 1> %s/stdout 2> %s/stderr",
+                        workerClass,
                         ApplicationConstants.LOG_DIR_EXPANSION_VAR,
                         ApplicationConstants.LOG_DIR_EXPANSION_VAR
                         )
@@ -34,6 +35,7 @@ public class ApplicationMaster {
     public static void main(String[] args) throws Exception {
         final String argJarPath = args[0];
         final String argCountContainer = args[1];
+        final String argWorkerClass = args[2];
         int countContainer = Integer.parseInt(argCountContainer);
         
         Configuration conf = new YarnConfiguration();
@@ -77,7 +79,7 @@ public class ApplicationMaster {
             AllocateResponse response = rmClient.allocate(responseId++);
             for(Container container : response.getAllocatedContainers()) {
                 ContainerLaunchContext ctx = Records.newRecord(ContainerLaunchContext.class);
-                ctx.setCommands(createWorkerCommands());
+                ctx.setCommands(createWorkerCommands(argWorkerClass));
                 ctx.setLocalResources(Collections.singletonMap("yarn-app.jar", util.createJarResource(argJarPath)));
                 ctx.setEnvironment(util.createDefaultEnvironment());
                 System.out.println(String.format("Launching container: %s", container.getId()));
