@@ -1,4 +1,4 @@
-package kitade.coins;
+package k4e.coins.tsukuba;
 
 import java.io.IOException;
 
