@@ -26,7 +26,7 @@ public class Client {
         }
         return Arrays.asList(
                 String.format(
-                        "$JAVA_HOME/bin/java -Xmx256M kitade.coins.ApplicationMasterAsync %s %d %s %s 1> %s/stdout 2> %s/stderr",
+                        "$JAVA_HOME/bin/java -Xmx256M k4e.coins.tsukuba.ApplicationMasterAsync %s %d %s %s 1> %s/stdout 2> %s/stderr",
                         jarPath,
                         countContainer,
                         workerClass,

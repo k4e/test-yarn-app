@@ -124,8 +124,8 @@ public class ApplicationMasterAsync extends AMRMClientAsync.AbstractCallbackHand
         
         // ワーカコンテナのリソースを設定
         Resource resource = Records.newRecord(Resource.class);
-        resource.setMemorySize(128);
-        resource.setVirtualCores(1);
+        resource.setMemorySize(8192);
+        resource.setVirtualCores(4);
         
         // ResourceManager にコンテナをリクエスト
         for(int i = 0; i < countContainer; ++i) {

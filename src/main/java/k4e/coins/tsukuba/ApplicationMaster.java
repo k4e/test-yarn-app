@@ -22,6 +22,12 @@ import org.apache.hadoop.yarn.util.Records;
 public class ApplicationMaster {
 
     public static List<String> createWorkerCommands(String workerClass, String... options) {
+        if ("sleep".equals(workerClass)) {
+            return Arrays.asList(String.format("sleep %s", options[0]));
+        }
+        else if ("stress-m".equals(workerClass)) {
+            return Arrays.asList(String.format("stress -m 1 --vm-bytes %s --vm-hang 0", options[0]));
+        }
         StringBuilder optionsBuilder = new StringBuilder();
         for(String o : options) {
             optionsBuilder.append(o);
